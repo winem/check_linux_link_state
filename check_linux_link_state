@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import sys
 
 def main(args):
     chk_device          = args.device
@@ -14,19 +15,22 @@ def main(args):
     try:
         operstate_sys_f = open(operstate_file_path, 'r')
     except IOError:
-        print('{} UNKNOWN - {} is not readable.'format(chk_msg_prefix, operstate_file_path))
+        print('{} UNKNOWN - {} is not readable.'.format(chk_msg_prefix, operstate_file_path))
         sys.exit(3)
     else:
         with operstate_sys_f:
             metrics                 = {}
-            metric                  = link_state
+            metric                  = 'link_state'
 
-            metrics['link_state']   = operstate_sys_f.read()
-            chk_msg['link_state']   = 'Device {} link is {}.'format(chk_device, metrics[metric])
+            metrics[metric]   = operstate_sys_f.read().strip()
+            chk_msg[metric]   = 'Device {} link is {}.'.format(chk_device, metrics[metric])
 
-    if metrics[metric] != 'up':
+    if metrics[metric] != args.state:
         chk_msg[metric] = 'Device {} link is {}'.format(chk_device, metrics[metric])
         chk_state       = 2
+        metrics[metric] = chk_state
+    else:
+        metrics[metric] = chk_state
 
     perf_data       = (' '.join("{!s}={!s}".format(k,v) for (k,v) in metrics.items()))
     chk_msg_string  = (';'.join("{!s}".format(v) for (k, v) in chk_msg.items()))
@@ -41,6 +45,11 @@ def parseArgs():
     argParser = argparse.ArgumentParser(description='Returns the link state of an interface.')
     argParser.add_argument('-d', '--device', dest='device', required=True, \
                             help='Monitored interface (examples: virbr0, eth0, ens192)')
+    argParser.add_argument('-s', '--state', dest='state', type=str, default='up', \
+                            help='Desired state of the monitored interface.')
+
+    return argParser.parse_args()
+
 
 if __name__ == "__main__":
     args = parseArgs()
