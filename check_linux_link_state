@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+import argparse
+
+def main(args):
+    chk_device          = args.device
+    chk_msg             = {}
+    chk_msg_prefix      = '{} LINK STATE'.format(chk_device)
+    chk_state           = 0
+    chk_state_strings   = [ 'OK', 'WARNING', 'CRTITCAL', 'UNKNOWN' ]
+
+    operstate_file_path = '/sys/class/net/{}/operstate'.format(chk_device)
+
+    try:
+        operstate_sys_f = open(operstate_file_path, 'r')
+    except IOError:
+        print('{} UNKNOWN - {} is not readable.'format(chk_msg_prefix, operstate_file_path))
+        sys.exit(3)
+    else:
+        with operstate_sys_f:
+            metrics                 = {}
+            metric                  = link_state
+
+            metrics['link_state']   = operstate_sys_f.read()
+            chk_msg['link_state']   = 'Device {} link is {}.'format(chk_device, metrics[metric])
+
+    if metrics[metric] != 'up':
+        chk_msg[metric] = 'Device {} link is {}'.format(chk_device, metrics[metric])
+        chk_state       = 2
+
+    perf_data       = (' '.join("{!s}={!s}".format(k,v) for (k,v) in metrics.items()))
+    chk_msg_string  = (';'.join("{!s}".format(v) for (k, v) in chk_msg.items()))
+
+    composed_output = ' '.join((chk_msg_prefix, chk_state_strings[chk_state], '-', chk_msg_string, '|', perf_data))
+
+    print(composed_output)
+    sys.exit(chk_state)
+
+
+def parseArgs():
+    argParser = argparse.ArgumentParser(description='Returns the link state of an interface.')
+    argParser.add_argument('-d', '--device', dest='device', required=True, \
+                            help='Monitored interface (examples: virbr0, eth0, ens192)')
+
+if __name__ == "__main__":
+    args = parseArgs()
+    main(args)
