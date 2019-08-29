@@ -46,7 +46,7 @@ def parseArgs():
     argParser.add_argument('-d', '--device', dest='device', required=True, \
                             help='Monitored interface (examples: virbr0, eth0, ens192)')
     argParser.add_argument('-s', '--state', dest='state', type=str, default='up', \
-                            help='Desired state of the monitored interface.')
+                            help='Desired state of the monitored interface. Default: up')
 
     return argParser.parse_args()
 
